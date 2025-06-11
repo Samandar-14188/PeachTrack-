@@ -21,8 +21,9 @@ export default function EntryForm() {
       crates: Number(crates),
       kg: Number(kg),
       pricePerKg: Number(pricePerKg),
+      tara: 0, // yoki foydalanuvchidan kiritilgan qiymat bo‘lsa, shuni yozing
     });
-
+    
     setMessage('Maʼlumot saqlandi!');
     setDate('');
     setCrates('');
