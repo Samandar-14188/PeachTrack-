@@ -3,7 +3,9 @@ export interface SaleRecord {
   crates: number;
   kg: number;
   pricePerKg: number;
+  tara: number; // yangi qo‘shildi
 }
+
 
 const STORAGE_KEY = 'shaftoli-sales';
 

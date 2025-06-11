@@ -4,11 +4,9 @@ import {
   TextField,
   Button,
   Paper,
-  Alert,
 } from '@mui/material';
-// Grid importini olib tashladik
-
-import React, { useState, useEffect } from 'react';
+import Stack from '@mui/material/Stack';
+import { useState, useEffect } from 'react';
 import { SaleRecord, getSales, saveSale, deleteSale, updateSale } from '../utils/storage';
 
 export default function Hisobot() {
@@ -17,11 +15,11 @@ export default function Hisobot() {
     crates: 0,
     kg: 0,
     pricePerKg: 0,
+    tara: 0, // yangi qo‘shildi
   });
 
   const [sales, setSales] = useState<SaleRecord[]>([]);
   const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setSales(getSales());
@@ -31,35 +29,13 @@ export default function Hisobot() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const validateForm = () => {
-    if (!form.date) {
-      setError('Sana kiritilishi shart.');
-      return false;
-    }
-    if (form.crates <= 0 || isNaN(form.crates)) {
-      setError('Yashik soni musbat bo‘lishi kerak.');
-      return false;
-    }
-    if (form.kg <= 0 || isNaN(form.kg)) {
-      setError('Kg musbat bo‘lishi kerak.');
-      return false;
-    }
-    if (form.pricePerKg <= 0 || isNaN(form.pricePerKg)) {
-      setError('Kg narxi musbat bo‘lishi kerak.');
-      return false;
-    }
-    setError(null);
-    return true;
-  };
-
   const handleSubmit = () => {
-    if (!validateForm()) return;
-
     const formatted = {
       ...form,
       crates: Number(form.crates),
       kg: Number(form.kg),
       pricePerKg: Number(form.pricePerKg),
+      tara: Number(form.tara), // convert
     };
 
     if (editIndex !== null) {
@@ -68,7 +44,7 @@ export default function Hisobot() {
       saveSale(formatted);
     }
 
-    setForm({ date: '', crates: 0, kg: 0, pricePerKg: 0 });
+    setForm({ date: '', crates: 0, kg: 0, pricePerKg: 0, tara: 0 });
     setSales(getSales());
     setEditIndex(null);
   };
@@ -79,22 +55,14 @@ export default function Hisobot() {
   };
 
   const handleEdit = (index: number) => {
-    setForm(sales[index]);
+    const sale = sales[index];
+    setForm(sale);
     setEditIndex(index);
-    setError(null);
   };
 
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom>
-        Kunlik Hisobot
-      </Typography>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      <Typography variant="h4" gutterBottom>Kunlik Hisobot</Typography>
 
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3 }}>
         <TextField
@@ -106,17 +74,24 @@ export default function Hisobot() {
           InputLabelProps={{ shrink: true }}
         />
         <TextField
-          label="Yashik"
+          label="Yashik soni"
           name="crates"
           type="number"
           value={form.crates}
           onChange={handleChange}
         />
         <TextField
-          label="Kg"
+          label="Umumiy kg"
           name="kg"
           type="number"
           value={form.kg}
+          onChange={handleChange}
+        />
+        <TextField
+          label="Tara (kg)"
+          name="tara"
+          type="number"
+          value={form.tara}
           onChange={handleChange}
         />
         <TextField
@@ -136,62 +111,33 @@ export default function Hisobot() {
         </Button>
       </Box>
 
-      {/* Grid o‘rniga Box flex container */}
-      <Box
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 2,
-          justifyContent: 'flex-start',
-        }}
-      >
-        {sales.map((sale, index) => (
-          <Paper
-            key={index}
-            elevation={3}
-            sx={{
-              p: 2,
-              width: { xs: '100%', sm: '48%', md: '31%' }, // 12, 6, 4 ga mos responsive kengliklar
-              boxSizing: 'border-box',
-            }}
-          >
-            <Typography variant="subtitle1">
-              <strong>Sana:</strong> {sale.date}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Yashik:</strong> {sale.crates}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Kg:</strong> {sale.kg}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Kg narxi:</strong> {sale.pricePerKg}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Jami:</strong> {sale.kg * sale.pricePerKg}
-            </Typography>
+      <Stack spacing={2}>
+        {sales.map((sale, index) => {
+          const netKg = sale.kg - sale.crates * sale.tara;
+          const total = netKg * sale.pricePerKg;
 
-            <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-              <Button
-                variant="outlined"
-                color="warning"
-                size="small"
-                onClick={() => handleEdit(index)}
-              >
-                Tahrirla
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                size="small"
-                onClick={() => handleDelete(index)}
-              >
-                O‘chirish
-              </Button>
-            </Box>
-          </Paper>
-        ))}
-      </Box>
+          return (
+            <Paper elevation={3} sx={{ p: 2 }} key={index}>
+              <Typography><strong>Sana:</strong> {sale.date}</Typography>
+              <Typography><strong>Yashik soni:</strong> {sale.crates}</Typography>
+              <Typography><strong>Umumiy kg:</strong> {sale.kg}</Typography>
+              <Typography><strong>Tara (kg):</strong> {sale.tara}</Typography>
+              <Typography><strong>Sof kg:</strong> {netKg}</Typography>
+              <Typography><strong>Kg narxi:</strong> {sale.pricePerKg}</Typography>
+              <Typography><strong>Jami:</strong> {total} so‘m</Typography>
+
+              <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                <Button variant="outlined" color="warning" size="small" onClick={() => handleEdit(index)}>
+                  Tahrirla
+                </Button>
+                <Button variant="outlined" color="error" size="small" onClick={() => handleDelete(index)}>
+                  O‘chirish
+                </Button>
+              </Box>
+            </Paper>
+          );
+        })}
+      </Stack>
     </Box>
   );
 }
