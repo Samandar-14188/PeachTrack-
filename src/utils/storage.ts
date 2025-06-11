@@ -3,7 +3,7 @@ export interface SaleRecord {
   crates: number;
   kg: number;
   pricePerKg: number;
-  tara: number; // yangi qo‘shildi
+  tara: number; 
 }
 
 
